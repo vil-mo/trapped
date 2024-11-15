@@ -4,7 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy_ecs = "0.15.0-rc.3"
-bevy_utils = "0.15.0-rc.3"
-bevy_math = "0.15.0-rc.3"
+bevy = {version = "0.15.0-rc.3", default-features = false, features = ["dynamic_linking"]}
 enum_dispatch = "0.3.13"

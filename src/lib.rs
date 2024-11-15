@@ -1,125 +1,29 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    io::Take,
+    ops::{BitAnd, BitOr},
+};
 
 use bevy_ecs::{
     component::Component,
-    entity::{self, Entity},
-    event::{Event, EventCursor, EventReader, Events},
-    query::{QueryData, QueryEntityError, QueryFilter, QueryItem, QueryState},
-    system::{BoxedSystem, In, IntoSystem, Local, Resource, System},
-    world::{unsafe_world_cell::UnsafeWorldCell, FromWorld, Mut, World},
+    entity::Entity,
+    event::{Event, EventCursor, Events},
+    system::{BoxedSystem, In, Local, Resource},
+    world::{Mut, World},
 };
-use bevy_math::IVec2;
-use bevy_utils::HashMap;
 use direction::Direction;
-use enum_dispatch::enum_dispatch;
+use positioning::{
+    action::{Action, ActionEnum},
+    target::Target,
+};
 
-mod direction;
+pub mod direction;
+pub mod positioning;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Event)]
 pub enum Signal {
     Move(Direction),
     Step,
-}
-
-pub struct WorldContext<'a> {
-    pub world: &'a mut World,
-    pub spatial_index: &'a mut SpatialIndex,
-}
-
-impl<'a> WorldContext<'a> {
-    pub fn reborrow<'b>(&'b mut self) -> WorldContext<'b> {
-        WorldContext {
-            world: self.world,
-            spatial_index: self.spatial_index,
-        }
-    }
-
-    pub fn can_move(&self, from: IVec2, direction: Direction) -> bool {
-        todo!();
-        false
-    }
-}
-
-pub type Actions = VecDeque<ActionEnum>;
-
-#[enum_dispatch]
-pub trait Action: Copy {
-    fn apply(self, target: Target, context: WorldContext, actions: &mut Actions);
-    fn undo(self, target: Target, context: WorldContext);
-}
-
-#[derive(Clone, Copy)]
-pub struct MoveWithoutPush(pub Direction);
-
-impl Action for MoveWithoutPush {
-    fn apply(self, target: Target, mut context: WorldContext, _actions: &mut Actions) {
-        let mut query = context.world.query::<&mut Object>();
-        for entity in target.iter(context.reborrow()) {
-            let Ok(object) = query.get(context.world, entity) else {
-                continue;
-            };
-            let pos = object.pos;
-            if !context.can_move(pos, self.0) {
-                continue;
-            }
-            let Ok(mut object) = query.get_mut(context.world, entity) else {
-                continue;
-            };
-
-            let removed = context.spatial_index.objects.remove(&*object);
-            debug_assert!(removed.is_some());
-            object.pos = self.0 + object.pos;
-            let replaced = context.spatial_index.objects.insert(*object, entity);
-            debug_assert!(replaced.is_none());
-        }
-    }
-
-    fn undo(self, target: Target, mut context: WorldContext) {
-        let mut query = context.world.query::<&mut Object>();
-        for entity in target.iter(context.reborrow()) {
-            let Ok(mut object) = query.get_mut(context.world, entity) else {
-                continue;
-            };
-
-            let removed = context.spatial_index.objects.remove(&*object);
-            debug_assert!(removed.is_some());
-            object.pos = !self.0 + object.pos;
-            let replaced = context.spatial_index.objects.insert(*object, entity);
-            debug_assert!(replaced.is_none());
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub struct MoveWithPush(pub Direction);
-
-#[derive(Clone, Copy)]
-pub struct Push(pub Direction);
-
-#[enum_dispatch(Action)]
-#[derive(Clone, Copy)]
-pub enum ActionEnum {
-    //MoveWithoutPush,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum Cell {
-    Of(Entity),
-    Neighbour(Entity, Direction),
-    Coord(IVec2),
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum Target {
-    Group(Group),
-    Cell(Cell),
-}
-
-impl Target {
-    pub fn iter(self, context: WorldContext) -> impl Iterator<Item = Entity> {
-        todo!();
-        std::iter::empty()
-    }
 }
 
 pub enum TakeAction {
@@ -138,8 +42,9 @@ pub enum Group {
     Cyan,
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum GroupComponent {
+    #[default]
     None,
     Red,
     Blue,
@@ -164,93 +69,45 @@ impl Group {
     }
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Floor {
-    pos: IVec2,
-}
-
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Object {
-    pos: IVec2,
-}
-
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Collectible {
-    pos: IVec2,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum WallAlignment {
-    Up,
-    Right,
+pub enum MakeStep {
+    Make,
+    DontMake,
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Wall {
-    pos: IVec2,
-    alignment: WallAlignment,
-}
-
-pub struct SpatialIndex {
-    floor: HashMap<Floor, Entity>,
-    objects: HashMap<Object, Entity>,
-    collectibles: HashMap<Collectible, Entity>,
-    walls: HashMap<Wall, Entity>,
-}
-
-impl FromWorld for SpatialIndex {
-    fn from_world(world: &mut bevy_ecs::world::World) -> Self {
-        let mut floor = HashMap::new();
-        let mut objects = HashMap::new();
-        let mut collectibles = HashMap::new();
-        let mut walls = HashMap::new();
-
-        for (entity, &f) in world.query::<(Entity, &Floor)>().iter(world) {
-            floor.insert(f, entity);
-        }
-
-        for (entity, &o) in world.query::<(Entity, &Object)>().iter(world) {
-            objects.insert(o, entity);
-        }
-
-        for (entity, &c) in world.query::<(Entity, &Collectible)>().iter(world) {
-            collectibles.insert(c, entity);
-        }
-
-        for (entity, &w) in world.query::<(Entity, &Wall)>().iter(world) {
-            walls.insert(w, entity);
-        }
-
-        Self {
-            floor,
-            objects,
-            collectibles,
-            walls,
+impl MakeStep {
+    #[inline]
+    fn to_bool(self) -> bool {
+        match self {
+            MakeStep::Make => true,
+            MakeStep::DontMake => false,
         }
     }
 }
 
-impl SpatialIndex {
-    pub fn get_floor(&self, pos: IVec2) -> Option<Entity> {
-        self.floor.get(&Floor { pos }).copied()
-    }
+impl BitOr for MakeStep {
+    type Output = Self;
 
-    pub fn get_object(&self, pos: IVec2) -> Option<Entity> {
-        self.objects.get(&Object { pos }).copied()
+    #[inline]
+    fn bitor(self, rhs: Self) -> Self::Output {
+        if self.to_bool() || rhs.to_bool() {
+            MakeStep::Make
+        } else {
+            MakeStep::DontMake
+        }
     }
+}
 
-    pub fn get_collectible(&self, pos: IVec2) -> Option<Entity> {
-        self.collectibles.get(&Collectible { pos }).copied()
-    }
+impl BitAnd for MakeStep {
+    type Output = Self;
 
-    #[rustfmt::skip]
-    pub fn get_wall(&self, pos: IVec2, direction: Direction) -> Option<Entity> {
-        self.walls.get(&match direction {
-            Direction::Down  => Wall { pos: direction + pos, alignment: WallAlignment::Up },
-            Direction::Up    => Wall { pos,                  alignment: WallAlignment::Up },
-            Direction::Left  => Wall { pos: direction + pos, alignment: WallAlignment::Right },
-            Direction::Right => Wall { pos,                  alignment: WallAlignment::Right },
-        }).copied()
+    #[inline]
+    fn bitand(self, rhs: Self) -> Self::Output {
+        if self.to_bool() && rhs.to_bool() {
+            MakeStep::Make
+        } else {
+            MakeStep::DontMake
+        }
     }
 }
 
@@ -260,21 +117,31 @@ pub struct ProcessSingnalsPasses {
 }
 
 fn process_signals(world: &mut World, mut signal_cursor: Local<EventCursor<Signal>>) {
-    let Some(mut passes) = world.remove_resource::<ProcessSingnalsPasses>() else {
-        return;
-    };
+    world.resource_scope(|world, mut passes: Mut<ProcessSingnalsPasses>| {
+        let mut signals = VecDeque::from_iter(
+            signal_cursor
+                .read(world.resource::<Events<Signal>>())
+                .copied(),
+        );
 
-    let mut signals = VecDeque::from_iter(
-        signal_cursor
-            .read(world.resource::<Events<Signal>>())
-            .copied(),
-    );
+        while let Some(signal) = signals.pop_front() {
+            let mut make_step = MakeStep::DontMake;
 
-    while let Some(signal) = signals.pop_front() {
-        for pass in &mut passes.signal_reactions {
-            let take_action = pass.run(signal, world);
+            for pass in &mut passes.signal_reactions {
+                let take_action = pass.run(signal, world);
+                
+                if let TakeAction::Take(action, target) = take_action {
+                    let mut actions = VecDeque::new();
+                    actions.push_back(action);
+                    while let Some(action) = actions.pop_front() {
+                        make_step = make_step | action.apply(target, world, &mut actions);
+                    }
+                }
+            }
+
+            if MakeStep::Make == make_step {
+                signals.push_front(Signal::Step);
+            }
         }
-    }
-
-    world.insert_resource(passes);
+    });
 }
