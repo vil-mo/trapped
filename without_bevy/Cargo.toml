@@ -1,8 +1,0 @@
-[package]
-name = "trapped"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-hashbrown = "0.15"
-glam = "0.29"

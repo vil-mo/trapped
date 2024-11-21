@@ -1,5 +1,4 @@
-use bevy_ecs::component::Component;
-use bevy_math::IVec2;
+use bevy::{ecs::component::Component, math::IVec2};
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Floor {

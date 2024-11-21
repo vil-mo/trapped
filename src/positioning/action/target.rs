@@ -1,10 +1,18 @@
 use super::{
-    components::{collectible::Collectible, floor::Floor, object::Object, wall::Wall},
-    spatial_index::SpatialIndex,
+    super::{
+        components::{collectible::Collectible, floor::Floor, object::Object, wall::Wall},
+        spatial_index::SpatialIndex,
+    },
+    Action, ActionEnum, ActionStatus,
 };
-use crate::{direction::Direction, Group, GroupComponent};
-use bevy_ecs::{entity::Entity, query::With, world::World};
-use bevy_math::IVec2;
+use crate::{
+    direction::Direction,
+    group::{Group, GroupComponent},
+};
+use bevy::{
+    ecs::{entity::Entity, query::With, world::World},
+    math::IVec2,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Target {
@@ -84,4 +92,17 @@ impl Target {
 
         directions.into_iter().flatten()
     });
+}
+
+#[derive(Clone, Copy)]
+pub struct TargetedAction(pub ActionEnum, pub Target);
+
+impl TargetedAction {
+    pub fn apply(self, world: &mut World) -> ActionStatus {
+        self.0.apply(self.1, world)
+    }
+
+    pub fn undo(self, world: &mut World) {
+        self.0.undo(self.1, world)
+    }
 }

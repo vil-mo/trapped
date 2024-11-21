@@ -7,7 +7,7 @@ use super::{
     spatial_index::SpatialIndex,
 };
 use crate::direction::Direction;
-use bevy_ecs::{
+use bevy::ecs::{
     entity::Entity,
     query::{Has, With},
     system::{Query, Res, SystemState},

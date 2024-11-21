@@ -1,4 +1,4 @@
-use bevy_math::IVec2;
+use bevy::math::IVec2;
 use std::ops::{Add, Not};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -29,7 +29,7 @@ impl Not for Direction {
             Direction::Up => Direction::Down,
             Direction::Left => Direction::Right,
             Direction::Right => Direction::Left,
-        }    
+        }
     }
 }
 

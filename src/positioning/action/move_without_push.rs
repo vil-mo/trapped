@@ -4,7 +4,7 @@ use crate::{
         can_move::can_move, components::object::Object, spatial_index::SpatialIndex, target::Target,
     }, MakeStep,
 };
-use bevy_ecs::{prelude::*, system::SystemState};
+use bevy::ecs::{prelude::*, system::SystemState};
 
 use super::{Action, Actions};
 
@@ -12,7 +12,11 @@ use super::{Action, Actions};
 pub struct MoveWithoutPush(pub Direction);
 
 impl Action for MoveWithoutPush {
-    fn apply(self, target: Target, world: &mut World, _actions: &mut Actions) -> MakeStep {
+    fn is_being_applied(&mut self, world: &mut World) -> bool {
+        false
+    }
+
+    fn begin_apply(&mut self, target: Target, world: &mut World, _actions: &mut Actions) -> MakeStep {
         let mut system_state =
             SystemState::<(Query<&mut Object>, ResMut<SpatialIndex>)>::new(world);
 
@@ -41,7 +45,7 @@ impl Action for MoveWithoutPush {
         make_step
     }
 
-    fn undo(self, target: Target, world: &mut World) {
+    fn undo(&mut self, target: Target, world: &mut World) {
         let mut system_state =
             SystemState::<(Query<&mut Object>, ResMut<SpatialIndex>)>::new(world);
 
