@@ -1,9 +1,6 @@
-use bevy::{ecs::component::Component, math::IVec2};
+use bevy::prelude::Component;
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Object {
-    pub(in super::super) pos: IVec2,
-}
+pub use crate::positioning::Object;
 
 /// Object only can move if in the position it moves onto there is a
 /// [`Floor`](super::floor::Floor) that is not [`Unwalkable`](super::floor::Unwalkable).

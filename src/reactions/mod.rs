@@ -1,4 +1,4 @@
-use crate::{positioning::action::target::TargetedAction, signal::Signal};
+use crate::{signal::Signal, target::TargetedAction};
 use bevy::prelude::{Resource, World};
 
 mod game_loop;

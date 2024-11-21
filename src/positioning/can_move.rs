@@ -1,10 +1,8 @@
-use super::{
-    components::{
-        floor::{Floor, Unwalkable},
-        object::{NeedsWalkableFloor, Object, PassesThroughWalls},
-        wall::{AlwaysPassable, Wall},
-    },
-    spatial_index::SpatialIndex,
+use super::spatial_index::SpatialIndex;
+use crate::components::{
+    floor::{Floor, Unwalkable},
+    object::{NeedsWalkableFloor, Object, PassesThroughWalls},
+    wall::{AlwaysPassable, Wall},
 };
 use crate::direction::Direction;
 use bevy::ecs::{

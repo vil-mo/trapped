@@ -1,6 +1,7 @@
-use crate::positioning::action::{target::TargetedAction, ActionStatus};
 use bevy::prelude::{Resource, World};
 use std::{collections::VecDeque, ops::BitOrAssign};
+
+use crate::{actions::ActionStatus, target::TargetedAction};
 
 pub struct ActionsQueuePlugin;
 

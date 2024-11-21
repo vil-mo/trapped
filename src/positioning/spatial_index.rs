@@ -1,9 +1,4 @@
-use super::components::{
-    collectible::Collectible,
-    floor::Floor,
-    object::Object,
-    wall::{Wall, WallAlignment},
-};
+use super::{Collectible, Floor, Object, Wall, WallAlignment};
 use crate::direction::Direction;
 use bevy::{
     app::{App, Plugin},

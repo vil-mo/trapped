@@ -1,12 +1,10 @@
+use crate::target::{Target, TargetedAction};
 use bevy::ecs::world::World;
 use enum_dispatch::enum_dispatch;
 use std::time::Duration;
-use target::{Target, TargetedAction};
 //use move_without_push::MoveWithoutPush;
 
 //pub mod move_without_push;
-
-pub mod target;
 
 pub enum ActionStatus {
     Made(Duration, Vec<TargetedAction>),

@@ -1,13 +1,9 @@
-use super::{
-    super::{
-        components::{collectible::Collectible, floor::Floor, object::Object, wall::Wall},
-        spatial_index::SpatialIndex,
-    },
-    Action, ActionEnum, ActionStatus,
-};
 use crate::{
+    actions::{Action, ActionEnum, ActionStatus},
+    components::{collectible::Collectible, floor::Floor, object::Object, wall::Wall},
     direction::Direction,
     group::{Group, GroupComponent},
+    positioning::spatial_index::SpatialIndex,
 };
 use bevy::{
     ecs::{entity::Entity, query::With, world::World},
