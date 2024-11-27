@@ -1,6 +1,6 @@
 use bevy::{math::IVec2, prelude::Component};
 
-pub mod can_move;
+pub mod movement;
 pub mod spatial_index;
 
 pub struct PositioningPlugin;

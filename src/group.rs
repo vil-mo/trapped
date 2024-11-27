@@ -36,4 +36,16 @@ impl Group {
             None => Group::None(entity),
         }
     }
+
+    pub fn to_component(self) -> GroupComponent {
+        match self {
+            Group::None(_) => GroupComponent::None,
+            Group::Red => GroupComponent::Red,
+            Group::Blue => GroupComponent::Blue,
+            Group::Green => GroupComponent::Green,
+            Group::Yellow => GroupComponent::Yellow,
+            Group::Pink => GroupComponent::Pink,
+            Group::Cyan => GroupComponent::Cyan,
+        }
+    }
 }

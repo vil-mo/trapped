@@ -2,9 +2,10 @@ use crate::target::{Target, TargetedAction};
 use bevy::ecs::world::World;
 use enum_dispatch::enum_dispatch;
 use std::time::Duration;
-//use move_without_push::MoveWithoutPush;
 
-//pub mod move_without_push;
+pub mod force_move;
+pub mod push;
+pub mod willing_move;
 
 pub enum ActionStatus {
     Made(Duration, Vec<TargetedAction>),
@@ -38,5 +39,5 @@ impl Action for NoAction {
 #[derive(Clone, Copy)]
 pub enum ActionEnum {
     NoAction,
-    //    MoveWithoutPush,
+    
 }

@@ -34,13 +34,13 @@ impl<A: Iterator<Item = Entity>, B: Iterator<Item = Entity>> Iterator for Either
 
 macro_rules! fitting_target {
     ($func_name:ident, $t:ty, $cell:expr) => {
-        pub fn $func_name(self, world: &mut World) -> impl Iterator<Item = Entity> {
+        pub fn $func_name(self, world: &mut World) -> Vec<Entity> {
             match self {
                 Target::Group(group) => {
                     let mut query =
                         world.query_filtered::<(Entity, Option<&GroupComponent>), With<$t>>();
 
-                    let v = query
+                    query
                         .iter(world)
                         .filter_map(|(entity, group_component)| {
                             if Group::from_component(group_component.copied(), entity) == group {
@@ -49,12 +49,11 @@ macro_rules! fitting_target {
                                 None
                             }
                         })
-                        .collect::<Vec<_>>();
-                    EitherIterator::A(v.into_iter())
+                        .collect()
                 }
                 Target::Cell(pos) => {
                     let spatial_index = world.resource::<SpatialIndex>();
-                    EitherIterator::B(($cell)(spatial_index, pos))
+                    ($cell)(spatial_index, pos).into_iter().collect()
                 }
             }
         }
@@ -62,6 +61,42 @@ macro_rules! fitting_target {
 }
 
 impl Target {
+    /// True if the entity matches the target.
+    pub fn entity_matches(&self, world: &World, entity: Entity) -> bool {
+        match *self {
+            Target::Group(group) => world
+                .entity(entity)
+                .get::<GroupComponent>()
+                .map_or(false, |&group_component| {
+                    group_component == group.to_component()
+                }),
+            Target::Cell(pos) => {
+                let spatial_index = world.resource::<SpatialIndex>();
+                spatial_index
+                    .get_collectible(pos)
+                    .map_or(false, |entity| entity == entity)
+                    || spatial_index
+                        .get_floor(pos)
+                        .map_or(false, |entity| entity == entity)
+                    || spatial_index
+                        .get_object(pos)
+                        .map_or(false, |entity| entity == entity)
+                    || spatial_index
+                        .get_wall(pos, Direction::Down)
+                        .map_or(false, |entity| entity == entity)
+                    || spatial_index
+                        .get_wall(pos, Direction::Up)
+                        .map_or(false, |entity| entity == entity)
+                    || spatial_index
+                        .get_wall(pos, Direction::Left)
+                        .map_or(false, |entity| entity == entity)
+                    || spatial_index
+                        .get_wall(pos, Direction::Right)
+                        .map_or(false, |entity| entity == entity)
+            }
+        }
+    }
+
     fitting_target!(
         fitting_collectibles,
         Collectible,
