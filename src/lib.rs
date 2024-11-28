@@ -1,3 +1,7 @@
+//! Correctness formalization if I were to give someone else development rights:
+//! - (State of the board)[actions::Action::undo]
+//! - (Cells occupation)[positioning::movement]
+
 use bevy::app::{App, Plugin};
 
 mod actions;

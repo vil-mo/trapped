@@ -62,12 +62,9 @@ fn game_loop_system(world: &mut World) {
             let status = actions_queue.pop_front(world);
 
             if let Some(status) = status {
-                match status {
-                    ActionStatus::Made(duration, additional_actions) => {
-                        world.resource_mut::<ExecutingActionTimer>().start(duration);
-                        actions_queue.extend(additional_actions);
-                    }
-                    _ => (),
+                if let ActionStatus::Made(duration, additional_actions) = status {
+                    world.resource_mut::<ExecutingActionTimer>().start(duration);
+                    actions_queue.extend(additional_actions);
                 }
             } else if actions_queue.should_make_step() {
                 process_step(world);

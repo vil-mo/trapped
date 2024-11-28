@@ -19,9 +19,17 @@ impl ActionStatus {
     }
 }
 
+pub enum ActionIsBeing {
+    Applied,
+    Undone,
+}
+
 #[enum_dispatch]
 pub trait Action: Copy {
     fn apply(self, target: Target, world: &mut World) -> ActionStatus;
+
+    /// CORRECTNESS: Should only be called if this action was applied and
+    /// the state of the board is the same as it was right after this exact action was applied.
     fn undo(self, target: Target, world: &mut World);
 }
 
@@ -38,6 +46,6 @@ impl Action for NoAction {
 #[enum_dispatch(Action)]
 #[derive(Clone, Copy)]
 pub enum ActionEnum {
-    NoAction,
-    
+    NoAction(NoAction),
+    WillingMove(willing_move::WillingMove),
 }

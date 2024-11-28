@@ -9,9 +9,9 @@ pub enum Direction {
     Right,
 }
 
-impl Into<IVec2> for Direction {
-    fn into(self) -> IVec2 {
-        match self {
+impl From<Direction> for IVec2 {
+    fn from(value: Direction) -> Self {
+        match value {
             Direction::Down => IVec2::NEG_Y,
             Direction::Up => IVec2::Y,
             Direction::Left => IVec2::NEG_X,

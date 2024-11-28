@@ -35,24 +35,26 @@ pub enum CanMoveEntity {
 impl CanMoveEntity {
     #[inline]
     pub fn to_bool(self) -> bool {
-        match self {
-            CanMoveEntity::Can => true,
-            _ => false,
-        }
+        matches!(self, CanMoveEntity::Can)
     }
 }
 
-pub fn can_move_entity(world: &mut World, entity: Entity, direction: Direction) -> CanMoveEntity {
-    let mut system_state = SystemState::<(
-        Res<SpatialIndex>,
-        Query<(&Object, Has<NeedsWalkableFloor>, Has<PassesThroughWalls>)>,
-        Query<Has<AlwaysPassable>, With<Wall>>,
-        Query<Has<Unwalkable>, With<Floor>>,
-    )>::new(world);
-    let world: &World = world;
+pub fn can_move_entity(world: &World, entity: Entity, direction: Direction) -> CanMoveEntity {
+    let (spatial_index, mut object_query, mut wall_query, mut floor_query) = (
+        world.resource::<SpatialIndex>(),
+        world
+            .try_query::<(&Object, Has<NeedsWalkableFloor>, Has<PassesThroughWalls>)>()
+            .unwrap(),
+        world
+            .try_query_filtered::<Has<AlwaysPassable>, With<Wall>>()
+            .unwrap(),
+        world
+            .try_query_filtered::<Has<Unwalkable>, With<Floor>>()
+            .unwrap(),
+    );
 
-    let (spatial_index, object_query, wall_query, floor_query) = system_state.get(world);
-    let Ok((object, needs_walkable_floor, passes_through_walls)) = object_query.get(entity) else {
+    let Ok((object, needs_walkable_floor, passes_through_walls)) = object_query.get(world, entity)
+    else {
         return CanMoveEntity::NotAnObject;
     };
 
@@ -60,7 +62,7 @@ pub fn can_move_entity(world: &mut World, entity: Entity, direction: Direction) 
         let wall = spatial_index.get_wall(object.pos, direction);
         if let Some(wall_entity) = wall {
             let always_passable = wall_query
-                .get(wall_entity)
+                .get(world, wall_entity)
                 .expect("`SpatialIndex` should return walls on wall request");
 
             if !always_passable {
@@ -80,7 +82,7 @@ pub fn can_move_entity(world: &mut World, entity: Entity, direction: Direction) 
         };
 
         let unwalkable = floor_query
-            .get(floor_entity)
+            .get(world, floor_entity)
             .expect("`SpatialIndex` should return floor on floor request");
 
         if unwalkable {
@@ -124,7 +126,7 @@ impl CanMove {
         match self {
             CanMove::Can => *self = CanMove::UnwalkableFloor(vec![bumped], vec![]),
             CanMove::NoFloor(entities) => {
-                let entities_vec = mem::replace(entities, vec![]);
+                let entities_vec = mem::take(entities);
                 *self = CanMove::UnwalkableFloor(vec![bumped], entities_vec);
             }
             CanMove::UnwalkableFloor(bumpeds, _) => {
@@ -142,7 +144,7 @@ impl CanMove {
     }
 }
 
-pub fn can_move(world: &mut World, target: Target, direction: Direction) -> CanMove {
+pub fn can_move(world: &World, target: Target, direction: Direction) -> CanMove {
     let objects = target.fitting_objects(world);
 
     let mut can_move = CanMove::Can;
@@ -237,8 +239,8 @@ pub fn move_target(world: &mut World, target: Target, direction: Direction) {
     //     translate(world, object, direction);
     // }
 
-    // n * n worst case, but n is small + overwelmengly likely amount of repeats is really small
-    let mut objects = objects.into_iter().map(|e| Some(e)).collect::<Vec<_>>();
+    // n * n worst case, but n is small + overwelmengly likely it will be way faster
+    let mut objects = objects.into_iter().map(Some).collect::<Vec<_>>();
     let mut should_iterate = true;
     while should_iterate {
         should_iterate = false;

@@ -13,24 +13,12 @@ impl bevy::app::Plugin for ReactionsPlugin {
     }
 }
 
-type SignalReaction = fn(Signal, &mut World) -> Vec<TargetedAction>;
+type SignalReaction = fn(Signal, &World) -> Vec<TargetedAction>;
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 struct SignalReactions(Vec<SignalReaction>);
 
-impl Default for SignalReactions {
-    fn default() -> Self {
-        Self(vec![])
-    }
-}
+type StepReaction = fn(&World) -> Vec<TargetedAction>;
 
-type StepReaction = fn(&mut World) -> Vec<TargetedAction>;
-
-#[derive(Resource)]
+#[derive(Resource, Default)]
 struct StepReactions(Vec<StepReaction>);
-
-impl Default for StepReactions {
-    fn default() -> Self {
-        Self(vec![])
-    }
-}

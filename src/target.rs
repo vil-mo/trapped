@@ -34,11 +34,12 @@ impl<A: Iterator<Item = Entity>, B: Iterator<Item = Entity>> Iterator for Either
 
 macro_rules! fitting_target {
     ($func_name:ident, $t:ty, $cell:expr) => {
-        pub fn $func_name(self, world: &mut World) -> Vec<Entity> {
+        pub fn $func_name(self, world: &World) -> Vec<Entity> {
             match self {
                 Target::Group(group) => {
-                    let mut query =
-                        world.query_filtered::<(Entity, Option<&GroupComponent>), With<$t>>();
+                    let mut query = world
+                        .try_query_filtered::<(Entity, Option<&GroupComponent>), With<$t>>()
+                        .unwrap();
 
                     query
                         .iter(world)
@@ -60,6 +61,12 @@ macro_rules! fitting_target {
     };
 }
 
+macro_rules! map_or_entitiy_eq {
+    ($entity:expr, $($fns:expr,)*) => {
+        false $(|| ($fns)().map_or(false, |e| e == $entity))*
+    };
+}
+
 impl Target {
     /// True if the entity matches the target.
     pub fn entity_matches(&self, world: &World, entity: Entity) -> bool {
@@ -72,27 +79,15 @@ impl Target {
                 }),
             Target::Cell(pos) => {
                 let spatial_index = world.resource::<SpatialIndex>();
-                spatial_index
-                    .get_collectible(pos)
-                    .map_or(false, |entity| entity == entity)
-                    || spatial_index
-                        .get_floor(pos)
-                        .map_or(false, |entity| entity == entity)
-                    || spatial_index
-                        .get_object(pos)
-                        .map_or(false, |entity| entity == entity)
-                    || spatial_index
-                        .get_wall(pos, Direction::Down)
-                        .map_or(false, |entity| entity == entity)
-                    || spatial_index
-                        .get_wall(pos, Direction::Up)
-                        .map_or(false, |entity| entity == entity)
-                    || spatial_index
-                        .get_wall(pos, Direction::Left)
-                        .map_or(false, |entity| entity == entity)
-                    || spatial_index
-                        .get_wall(pos, Direction::Right)
-                        .map_or(false, |entity| entity == entity)
+                map_or_entitiy_eq!(entity, 
+                    || spatial_index.get_collectible(pos),
+                    || spatial_index.get_floor(pos),
+                    || spatial_index.get_object(pos),
+                    || spatial_index.get_wall(pos, Direction::Down),
+                    || spatial_index.get_wall(pos, Direction::Up),
+                    || spatial_index.get_wall(pos, Direction::Left),
+                    || spatial_index.get_wall(pos, Direction::Right),
+                )
             }
         }
     }

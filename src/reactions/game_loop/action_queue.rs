@@ -21,11 +21,8 @@ enum DesidingToMakeStepVariants {
 
 impl BitOrAssign<bool> for DesidingToMakeStepVariants {
     fn bitor_assign(&mut self, rhs: bool) {
-        match (*self, rhs) {
-            (DesidingToMakeStepVariants::DontMake, true) => {
-                *self = DesidingToMakeStepVariants::Make;
-            }
-            _ => (),
+        if let (DesidingToMakeStepVariants::DontMake, true) = (*self, rhs) {
+            *self = DesidingToMakeStepVariants::Make;
         }
     }
 }
