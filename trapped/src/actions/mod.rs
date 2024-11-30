@@ -38,7 +38,7 @@ pub struct NoAction;
 
 impl Action for NoAction {
     fn apply(self, _target: Target, _world: &mut World) -> ActionStatus {
-        ActionStatus::InstantlyMade
+        ActionStatus::Failed
     }
     fn undo(self, _target: Target, _world: &mut World) {}
 }
