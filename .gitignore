@@ -1,3 +1,7 @@
 */target
-*/.vscode
+*/crates/*/target
+*/Cargo.lock
+
+# IDE files
 */.idea
+*/.vscode
