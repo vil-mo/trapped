@@ -1,7 +1,7 @@
-*/target
-*/crates/*/target
-*/Cargo.lock
+**/target
+!**/src/
+**/Cargo.lock
 
 # IDE files
-*/.idea
-*/.vscode
+**/.idea
+**/.vscode
