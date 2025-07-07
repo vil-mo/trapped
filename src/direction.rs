@@ -1,5 +1,5 @@
 use bevy::math::IVec2;
-use std::ops::{Add, Not};
+use std::ops::{Add, Neg};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
@@ -20,10 +20,10 @@ impl From<Direction> for IVec2 {
     }
 }
 
-impl Not for Direction {
+impl Neg for Direction {
     type Output = Self;
 
-    fn not(self) -> Self::Output {
+    fn neg(self) -> Self::Output {
         match self {
             Direction::Down => Direction::Up,
             Direction::Up => Direction::Down,

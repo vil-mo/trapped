@@ -7,4 +7,10 @@ impl bevy::app::Plugin for RegisterCollectibleComponentsPlugin {
     }
 }
 
-pub use crate::positioning::Collectible;
+pub use crate::level_state::positioning::Collectible;
+use crate::{action::ActionResult, level_state::{CollectibleId, LevelState}};
+
+pub struct OnActivated {
+    callback: fn(CollectibleId, &mut LevelState) -> ActionResult,
+}
+

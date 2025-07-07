@@ -1,27 +1,24 @@
-//! Correctness formalization if I were to give someone else development rights:
+//! Correctness formalization if I were to develop with someone else:
 //! - (State of the board)[actions::Action::undo]
 //! - (Cells occupation)[positioning::movement]
 
+#[warn(clippy::all)]
+
 use bevy::app::{App, Plugin};
 
-mod actions;
-mod components;
+mod action;
+mod component;
 mod direction;
 mod game_loop;
-mod group;
-mod positioning;
-mod signal;
 mod level_state;
-mod target;
 
 pub struct TrappedPlugin;
 
 impl Plugin for TrappedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-            positioning::PositioningPlugin,
+            component::RegisterComponentsPlugin,
             game_loop::GameLoopPlugin,
-            signal::SignalPlugin,
         ));
     }
 }

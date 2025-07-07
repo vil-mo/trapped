@@ -1,3 +1,6 @@
+use bevy::prelude::Component;
+use enumset::EnumSetType;
+
 pub mod collectible;
 pub mod floor;
 pub mod object;
@@ -13,5 +16,18 @@ impl bevy::app::Plugin for RegisterComponentsPlugin {
             object::RegisterObjectComponentsPlugin,
             wall::RegisterWallComponentsPlugin,
         ));
+
+        let world = app.world_mut();
+        world.register_component::<Group>();
     }
+}
+
+#[derive(Component, EnumSetType, Debug, Hash)]
+pub enum Group {
+    Red,
+    Blue,
+    Green,
+    Yellow,
+    Pink,
+    Cyan,
 }
